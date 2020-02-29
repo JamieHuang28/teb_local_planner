@@ -44,6 +44,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 
+#include <yaml-cpp/yaml.h>
+
 
 using namespace teb_local_planner; // it is ok here to import everything for testing purposes
 
@@ -61,6 +63,9 @@ ros::Subscriber clicked_points_sub;
 std::vector<ros::Subscriber> obst_vel_subs;
 unsigned int no_fixed_obstacles;
 
+PoseSE2 init_configuration(-5, 0, 0);
+PoseSE2 target_configuration(5, 0, 0);
+
 // =========== Function declarations =============
 void CB_mainCycle(const ros::TimerEvent& e);
 void CB_publishCycle(const ros::TimerEvent& e);
@@ -71,6 +76,9 @@ void CB_obstacle_marker(const visualization_msgs::InteractiveMarkerFeedbackConst
 void CB_clicked_points(const geometry_msgs::PointStampedConstPtr& point_msg);
 void CB_via_points(const nav_msgs::Path::ConstPtr& via_points_msg);
 void CB_setObstacleVelocity(const geometry_msgs::TwistConstPtr& twist_msg, const unsigned int id);
+
+// =========== Test
+void LoadCase(const std::string file_name = "/home/ros/catkin_ws/src/teb_local_planner/obstacles.yaml");
 
 
 // =============== Main function =================
@@ -103,18 +111,18 @@ int main( int argc, char** argv )
   // interactive marker server for simulated dynamic obstacles
   interactive_markers::InteractiveMarkerServer marker_server("marker_obstacles");
 
-  obst_vector.push_back( boost::make_shared<PointObstacle>(-3,1) );
-  obst_vector.push_back( boost::make_shared<PointObstacle>(6,2) );
-  obst_vector.push_back( boost::make_shared<PointObstacle>(0,0.1) );
+  // obst_vector.push_back( boost::make_shared<PointObstacle>(-3,1) );
+  // obst_vector.push_back( boost::make_shared<PointObstacle>(6,2) );
+  // obst_vector.push_back( boost::make_shared<PointObstacle>(0,0.1) );
 //  obst_vector.push_back( boost::make_shared<LineObstacle>(1,1.5,1,-1.5) ); //90 deg
 //  obst_vector.push_back( boost::make_shared<LineObstacle>(1,0,-1,0) ); //180 deg
 //  obst_vector.push_back( boost::make_shared<PointObstacle>(-1.5,-0.5) );
 
   // Dynamic obstacles
-  Eigen::Vector2d vel (0.1, -0.3);
-  obst_vector.at(0)->setCentroidVelocity(vel);
-  vel = Eigen::Vector2d(-0.3, -0.2);
-  obst_vector.at(1)->setCentroidVelocity(vel);
+  // Eigen::Vector2d vel (0.1, -0.3);
+  // obst_vector.at(0)->setCentroidVelocity(vel);
+  // vel = Eigen::Vector2d(-0.3, -0.2);
+  // obst_vector.at(1)->setCentroidVelocity(vel);
 
   /*
   PolygonObstacle* polyobst = new PolygonObstacle;
@@ -126,6 +134,8 @@ int main( int argc, char** argv )
   polyobst->finalizePolygon();
   obst_vector.emplace_back(polyobst);
   */
+
+  LoadCase();
   
   for (unsigned int i=0; i<obst_vector.size(); ++i)
   {
@@ -165,7 +175,7 @@ int main( int argc, char** argv )
 // Planning loop
 void CB_mainCycle(const ros::TimerEvent& e)
 {
-  planner->plan(PoseSE2(-4,0,0), PoseSE2(4,0,0)); // hardcoded start and goal for testing purposes
+  planner->plan(init_configuration, target_configuration); // hardcoded start and goal for testing purposes
 }
 
 // Visualization loop
@@ -317,4 +327,69 @@ void CB_setObstacleVelocity(const geometry_msgs::TwistConstPtr& twist_msg, const
 
   Eigen::Vector2d vel (twist_msg->linear.x, twist_msg->linear.y);
   obst_vector.at(id)->setCentroidVelocity(vel);
+}
+
+struct Box2d
+{
+  double center_x;
+  double center_y;
+  double heading;
+  double length;
+  double width;
+};
+
+namespace YAML {
+template<>
+struct convert<Box2d> {
+  static Node encode(const Box2d& rhs) {
+    Node node;
+    node["center"]["x"] = rhs.center_x;
+    node["center"]["y"] = rhs.center_y;
+    node["heading"] = rhs.heading;
+    node["length"] = rhs.length;
+    node["width"] = rhs.width;
+    return node;
+  }
+
+  static bool decode(const Node& node, Box2d& rhs) {
+    rhs.center_x = node["center"]["x"].as<double>();
+    rhs.center_y = node["center"]["y"].as<double>();
+    rhs.heading = node["heading"].as<double>();
+    rhs.length = node["length"].as<double>();
+    rhs.width = node["width"].as<double>();
+    return true;
+  }
+};
+}
+
+void LoadCase(const std::string file_name)
+{
+  YAML::Node yaml_node = YAML::LoadFile(file_name);
+
+  YAML::Node obstacle_box_node = yaml_node["obstacle_boxes"];
+  for(YAML::iterator iter = obstacle_box_node.begin();
+    iter != obstacle_box_node.end(); ++iter)
+  {
+    Box2d box = iter->as<Box2d>();
+    printf("box[x: %lf, y: %lf]\n", box.center_x, box.center_y);
+    PolygonObstacle* polyobst = new PolygonObstacle;
+    polyobst->pushBackVertex(box.width / 2 + box.center_x, box.width / 2 + box.center_y);
+    polyobst->pushBackVertex(-box.width / 2 + box.center_x, box.width / 2 + box.center_y);
+    polyobst->pushBackVertex(-box.width / 2 + box.center_x, - box.width / 2 + box.center_y);
+    polyobst->pushBackVertex(box.width / 2 + box.center_x, - box.width / 2 + box.center_y);
+  
+    polyobst->finalizePolygon();
+    obst_vector.emplace_back(polyobst);
+  }
+
+  init_configuration = PoseSE2(
+    yaml_node["start"]["x"].as<double>(),
+    yaml_node["start"]["y"].as<double>(),
+    yaml_node["start"]["theta"].as<double>()
+  );
+  target_configuration = PoseSE2(
+    yaml_node["target"]["x"].as<double>(),
+    yaml_node["target"]["y"].as<double>(),
+    yaml_node["target"]["theta"].as<double>()
+  );
 }
