@@ -382,6 +382,20 @@ void LoadCase(const std::string file_name)
     obst_vector.emplace_back(polyobst);
   }
 
+  YAML::Node obstacle_lines_node = yaml_node["obstacle_lines"];
+  for(int i = 0; i < obstacle_lines_node.size()/2; ++i)
+  {
+    double start_x;
+    double start_y;
+    double end_x;
+    double end_y;
+    start_x = obstacle_lines_node["x"][i * 2].as<double>();
+    start_y = obstacle_lines_node["y"][i * 2].as<double>();
+    end_x = obstacle_lines_node["x"][i * 2 + 1].as<double>();
+    end_y = obstacle_lines_node["y"][i * 2 + 1].as<double>();
+    obst_vector.push_back( boost::make_shared<LineObstacle>(start_x, start_y, end_x, end_y)); 
+  }
+
   init_configuration = PoseSE2(
     yaml_node["start"]["x"].as<double>(),
     yaml_node["start"]["y"].as<double>(),
