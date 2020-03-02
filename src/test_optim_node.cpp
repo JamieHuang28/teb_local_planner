@@ -45,7 +45,8 @@
 #include <boost/make_shared.hpp>
 
 #include <yaml-cpp/yaml.h>
-
+#include <tf/transform_datatypes.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 
 using namespace teb_local_planner; // it is ok here to import everything for testing purposes
 
@@ -63,6 +64,9 @@ ros::Subscriber clicked_points_sub;
 std::vector<ros::Subscriber> obst_vel_subs;
 unsigned int no_fixed_obstacles;
 
+ros::Subscriber initpose_sub;
+ros::Subscriber goalpose_sub;
+
 PoseSE2 init_configuration(-5, 0, 0);
 PoseSE2 target_configuration(5, 0, 0);
 
@@ -76,6 +80,8 @@ void CB_obstacle_marker(const visualization_msgs::InteractiveMarkerFeedbackConst
 void CB_clicked_points(const geometry_msgs::PointStampedConstPtr& point_msg);
 void CB_via_points(const nav_msgs::Path::ConstPtr& via_points_msg);
 void CB_setObstacleVelocity(const geometry_msgs::TwistConstPtr& twist_msg, const unsigned int id);
+void CB_setInitPose(const geometry_msgs::PoseWithCovarianceStamped);
+void CB_setGoalPose(const geometry_msgs::PoseStamped);
 
 // =========== Test
 void LoadCase(const std::string file_name = "/home/ros/catkin_ws/src/teb_local_planner/obstacles.yaml");
@@ -107,6 +113,9 @@ int main( int argc, char** argv )
   
   // setup callback for via-points (callback overwrites previously set via-points)
   via_points_sub = n.subscribe("via_points", 1, CB_via_points);
+
+  initpose_sub = n.subscribe("/initialpose", 1, CB_setInitPose);
+  goalpose_sub = n.subscribe("/move_base_simple/goal", 1, CB_setGoalPose);
 
   // interactive marker server for simulated dynamic obstacles
   interactive_markers::InteractiveMarkerServer marker_server("marker_obstacles");
@@ -383,7 +392,7 @@ void LoadCase(const std::string file_name)
   }
 
   YAML::Node obstacle_lines_node = yaml_node["obstacle_lines"];
-  for(int i = 0; i < obstacle_lines_node.size()/2; ++i)
+  for(int i = 0; i < obstacle_lines_node["x"].size()/2; ++i)
   {
     double start_x;
     double start_y;
@@ -406,4 +415,26 @@ void LoadCase(const std::string file_name)
     yaml_node["target"]["y"].as<double>(),
     yaml_node["target"]["theta"].as<double>()
   );
+}
+
+void CB_setInitPose(const geometry_msgs::PoseWithCovarianceStamped msg)
+{
+  double roll, pitch, yaw;
+  roll = pitch = yaw = 0;
+  auto quat = msg.pose.pose.orientation;
+  tf::Quaternion q(quat.x, quat.y, quat.z, quat.w);
+  tf::Matrix3x3 m(q);
+  m.getRPY(roll, pitch, yaw);
+  init_configuration = PoseSE2(msg.pose.pose.position.x, msg.pose.pose.position.y, yaw);
+}
+
+void CB_setGoalPose(const geometry_msgs::PoseStamped msg)
+{
+  double roll, pitch, yaw;
+  roll = pitch = yaw = 0;
+  auto quat = msg.pose.orientation;
+  tf::Quaternion q(quat.x, quat.y, quat.z, quat.w);
+  tf::Matrix3x3 m(q);
+  m.getRPY(roll, pitch, yaw);
+  target_configuration = PoseSE2(msg.pose.position.x, msg.pose.position.y, yaw);
 }
