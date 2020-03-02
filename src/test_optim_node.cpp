@@ -84,7 +84,7 @@ void CB_setInitPose(const geometry_msgs::PoseWithCovarianceStamped);
 void CB_setGoalPose(const geometry_msgs::PoseStamped);
 
 // =========== Test
-void LoadCase(const std::string file_name = "/home/ros/catkin_ws/src/teb_local_planner/obstacles.yaml");
+void LoadCase(const std::string file_name = "/home/ros/catkin_ws/src/teb_local_planner/cases/case.yaml");
 
 
 // =============== Main function =================
