@@ -212,6 +212,13 @@ target_link_libraries(test_optim_node
    ${catkin_LIBRARIES}
 )
 
+add_executable(test src/test.cpp)
+
+target_link_libraries(test
+   teb_local_planner
+   ${EXTERNAL_LIBS}
+)
+
 
 #############
 ## Install ##
