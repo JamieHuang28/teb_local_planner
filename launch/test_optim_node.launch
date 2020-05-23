@@ -1,15 +1,17 @@
 <launch>
-		<!--- Load Config -->
-		<rosparam file="$(find teb_local_planner)/cfg/carlike/teb_local_planner_params.yaml" command="load" ns="test_optim_node"/>
-	
+	<!--- Load Config -->
+	<rosparam file="$(find teb_local_planner)/cfg/carlike/teb_local_planner_params.yaml" command="load" ns="test_optim_node"/>
+
   	<!--- Run optimization test node -->
-   	<node pkg="teb_local_planner" type="test_optim_node" name="test_optim_node" output="screen" />
+   	<node pkg="teb_local_planner" type="test_optim_node" name="test_optim_node" output="screen">
+	   <param name="case_file" value="$(find teb_local_planner)/resource/cases/apa.yaml" />
+	</node>
 
   	<!-- RVIZ -->
   	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find teb_local_planner)/cfg/rviz_test_optim.rviz" />
 
-		<!-- Dynamic Reconfigure -->
-		<node pkg="rqt_reconfigure" type="rqt_reconfigure" name="rqt_reconfigure" />
+	<!-- Dynamic Reconfigure -->
+	<node pkg="rqt_reconfigure" type="rqt_reconfigure" name="rqt_reconfigure" />
 
 </launch>
 

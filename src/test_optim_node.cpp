@@ -84,7 +84,7 @@ void CB_setInitPose(const geometry_msgs::PoseWithCovarianceStamped);
 void CB_setGoalPose(const geometry_msgs::PoseStamped);
 
 // =========== Test
-void LoadCase(const std::string file_name = "/home/ros/catkin_ws/src/teb_local_planner/cases/case.yaml");
+void LoadCase(const std::string file_name);
 
 
 // =============== Main function =================
@@ -92,6 +92,10 @@ int main( int argc, char** argv )
 {
   ros::init(argc, argv, "test_optim_node");
   ros::NodeHandle n("~");
+
+  std::string case_file;
+  n.param<std::string>("case_file", case_file, "case.yaml");
+  LoadCase(case_file);
  
   
   // load ros parameters from node handle
@@ -143,8 +147,6 @@ int main( int argc, char** argv )
   polyobst->finalizePolygon();
   obst_vector.emplace_back(polyobst);
   */
-
-  LoadCase();
   
   for (unsigned int i=0; i<obst_vector.size(); ++i)
   {
