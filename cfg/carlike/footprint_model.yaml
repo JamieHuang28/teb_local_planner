@@ -1,0 +1,8 @@
+footprint_model: # types: "point", "circular", "two_circles", "line", "polygon", "three_circles"
+    type: "three_circles"
+    front_offset: 3.12 # for type "two_circles""three_circles"
+    front_radius: 1.05 # for type "two_circles""three_circles"
+    rear_offset: 0.343 # for type "two_circles""three_circles"
+    rear_radius: 1.05 # for type "two_circles""three_circles"
+    middle_offset: 1.0735 # for type "three_circles"
+    middle_radius: 1.05 # for type "three_circles"

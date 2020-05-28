@@ -1096,6 +1096,23 @@ RobotFootprintModelPtr TebLocalPlannerROS::getRobotFootprintFromParamServer(cons
     }
     
   }
+
+  // three circles
+  if (model_name.compare("three_circles") == 0)
+  {
+    double front_offset, front_radius, middle_offset, middle_radius, rear_offset, rear_radius;
+    nh.getParam("footprint_model/front_offset", front_offset);
+    nh.getParam("footprint_model/front_radius", front_radius);
+    nh.getParam("footprint_model/middle_offset", middle_offset);
+    nh.getParam("footprint_model/middle_radius", middle_radius);
+    nh.getParam("footprint_model/rear_offset", rear_offset);
+    nh.getParam("footprint_model/rear_radius", rear_radius);
+
+    ROS_INFO_STREAM("Footprint model 'three_circles' (front_offset: " << front_offset <<"m, front_radius: " << front_radius 
+                    << "m, middle_offset: " << middle_offset << "m, middle_radius: " << middle_radius
+                    << "m, rear_offset: " << rear_offset << "m, rear_radius: " << rear_radius << "m) loaded for trajectory optimization.");
+    return boost::make_shared<ThreeCirclesRobotFootprint>(front_offset, front_radius, middle_offset, middle_radius, rear_offset, rear_radius);
+  }
   
   // otherwise
   ROS_WARN_STREAM("Unknown robot footprint model specified with parameter '" << nh.getNamespace() << "/footprint_model/type'. Using point model instead.");

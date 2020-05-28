@@ -675,6 +675,146 @@ private:
   
 };
 
+/**
+ * @class ThreeCirclesRobotFootprint
+ * @brief Class that approximates the robot with three shifted circles
+ */
+class ThreeCirclesRobotFootprint : public BaseRobotFootprintModel
+{
+public:
+  
+  /**
+    * @brief Default constructor of the abstract obstacle class
+    * @param front_offset shift the center of the front circle along the robot orientation starting from the center at the rear axis (in meters)
+    * @param front_radius radius of the front circle
+    * @param middle_offset shift the center of the middle circle along the robot orientation starting from the center at the rear axis (in meters)
+    * @param middle_radius radius of the middle circle
+    * @param rear_offset shift the center of the rear circle along the opposite robot orientation starting from the center at the rear axis (in meters)
+    * @param rear_radius radius of the rear circle
+    */
+  ThreeCirclesRobotFootprint(double front_offset, double front_radius,double middle_offset, double middle_radius, double rear_offset, double rear_radius) 
+    : front_offset_(front_offset), front_radius_(front_radius),middle_offset_(middle_offset), middle_radius_(middle_radius), rear_offset_(rear_offset), rear_radius_(rear_radius) { }
+  
+  /**
+   * @brief Virtual destructor.
+   */
+  virtual ~ThreeCirclesRobotFootprint() { }
+
+  /**
+   * @brief Set parameters of the contour/footprint
+   * @param front_offset shift the center of the front circle along the robot orientation starting from the center at the rear axis (in meters)
+   * @param front_radius radius of the front circle
+   * @param rear_offset shift the center of the rear circle along the opposite robot orientation starting from the center at the rear axis (in meters)
+   * @param rear_radius radius of the front circle
+   */
+  void setParameters(double front_offset, double front_radius, double middle_offset, double middle_radius, double rear_offset, double rear_radius) 
+  {front_offset_=front_offset; front_radius_=front_radius; middle_offset_=middle_offset; middle_radius_=middle_radius; rear_offset_=rear_offset; rear_radius_=rear_radius;}
+  
+  /**
+    * @brief Calculate the distance between the robot and an obstacle
+    * @param current_pose Current robot pose
+    * @param obstacle Pointer to the obstacle
+    * @return Euclidean distance to the robot
+    */
+  virtual double calculateDistance(const PoseSE2& current_pose, const Obstacle* obstacle) const
+  {
+    Eigen::Vector2d dir = current_pose.orientationUnitVec();
+    double dist_front = obstacle->getMinimumDistance(current_pose.position() + front_offset_*dir) - front_radius_;
+    double dist_middle = obstacle->getMinimumDistance(current_pose.position() + middle_offset_*dir) - middle_radius_;
+    double dist_rear = obstacle->getMinimumDistance(current_pose.position() - rear_offset_*dir) - rear_radius_;
+    return std::min(std::min(dist_front, dist_rear), dist_middle);
+  }
+
+  /**
+    * @brief Estimate the distance between the robot and the predicted location of an obstacle at time t
+    * @param current_pose robot pose, from which the distance to the obstacle is estimated
+    * @param obstacle Pointer to the dynamic obstacle (constant velocity model is assumed)
+    * @param t time, for which the predicted distance to the obstacle is calculated
+    * @return Euclidean distance to the robot
+    */
+  virtual double estimateSpatioTemporalDistance(const PoseSE2& current_pose, const Obstacle* obstacle, double t) const
+  {
+    Eigen::Vector2d dir = current_pose.orientationUnitVec();
+    double dist_front = obstacle->getMinimumSpatioTemporalDistance(current_pose.position() + front_offset_*dir, t) - front_radius_;
+    double dist_middle = obstacle->getMinimumSpatioTemporalDistance(current_pose.position() + middle_offset_*dir, t) - middle_radius_;    
+    double dist_rear = obstacle->getMinimumSpatioTemporalDistance(current_pose.position() - rear_offset_*dir, t) - rear_radius_;
+    return std::min(std::min(dist_front, dist_rear), dist_middle);
+  }
+
+  /**
+    * @brief Visualize the robot using a markers
+    * 
+    * Fill a marker message with all necessary information (type, pose, scale and color).
+    * The header, namespace, id and marker lifetime will be overwritten.
+    * @param current_pose Current robot pose
+    * @param[out] markers container of marker messages describing the robot shape
+    * @param color Color of the footprint
+    */
+//   virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers, const std_msgs::ColorRGBA& color) const
+//   {    
+//     Eigen::Vector2d dir = current_pose.orientationUnitVec();
+//     if (front_radius_>0)
+//     {
+//       markers.push_back(visualization_msgs::Marker());
+//       visualization_msgs::Marker& marker1 = markers.front();
+//       marker1.type = visualization_msgs::Marker::CYLINDER;
+//       current_pose.toPoseMsg(marker1.pose);
+//       marker1.pose.position.x += front_offset_*dir.x();
+//       marker1.pose.position.y += front_offset_*dir.y();
+//       marker1.scale.x = marker1.scale.y = 2*front_radius_; // scale = diameter
+// //       marker1.scale.z = 0.05;
+//       marker1.color = color;
+
+//     }
+//     if (middle_radius_>0)
+//     {
+//       markers.push_back(visualization_msgs::Marker());
+//       visualization_msgs::Marker& marker2 = markers.at(1);
+//       marker2.type = visualization_msgs::Marker::CYLINDER;
+//       current_pose.toPoseMsg(marker2.pose);
+//       marker2.pose.position.x += middle_offset_*dir.x();
+//       marker2.pose.position.y += middle_offset_*dir.y();
+//       marker2.scale.x = marker2.scale.y = 2*middle_radius_; // scale = diameter
+// //       marker1.scale.z = 0.05;
+//       marker2.color = color;
+
+//     }
+//     if (rear_radius_>0)
+//     {
+//       markers.push_back(visualization_msgs::Marker());
+//       visualization_msgs::Marker& marker3 = markers.back();
+//       marker3.type = visualization_msgs::Marker::CYLINDER;
+//       current_pose.toPoseMsg(marker3.pose);
+//       marker3.pose.position.x -= rear_offset_*dir.x();
+//       marker3.pose.position.y -= rear_offset_*dir.y();
+//       marker3.scale.x = marker3.scale.y = 2*rear_radius_; // scale = diameter
+// //       marker2.scale.z = 0.05;
+//       marker3.color = color;
+//     }
+  
+  
+  /**
+   * @brief Compute the inscribed radius of the footprint model
+   * @return inscribed radius
+   */
+  virtual double getInscribedRadius() 
+  {
+      double min_longitudinal = std::min(std::min(rear_offset_ + rear_radius_, front_offset_ + front_radius_), middle_offset_ + middle_radius_);
+      double min_lateral = std::min(std::min(rear_radius_, front_radius_), middle_radius_);
+      return std::min(min_longitudinal, min_lateral);
+  }
+
+private:
+    
+  double front_offset_;
+  double front_radius_;
+  double middle_offset_;
+  double middle_radius_;
+  double rear_offset_;
+  double rear_radius_;
+  
+};
+
 
 
 
