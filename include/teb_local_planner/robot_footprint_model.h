@@ -750,47 +750,47 @@ public:
     * @param[out] markers container of marker messages describing the robot shape
     * @param color Color of the footprint
     */
-//   virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers, const std_msgs::ColorRGBA& color) const
-//   {    
-//     Eigen::Vector2d dir = current_pose.orientationUnitVec();
-//     if (front_radius_>0)
-//     {
-//       markers.push_back(visualization_msgs::Marker());
-//       visualization_msgs::Marker& marker1 = markers.front();
-//       marker1.type = visualization_msgs::Marker::CYLINDER;
-//       current_pose.toPoseMsg(marker1.pose);
-//       marker1.pose.position.x += front_offset_*dir.x();
-//       marker1.pose.position.y += front_offset_*dir.y();
-//       marker1.scale.x = marker1.scale.y = 2*front_radius_; // scale = diameter
-// //       marker1.scale.z = 0.05;
-//       marker1.color = color;
+  virtual void visualizeRobot(const PoseSE2& current_pose, std::vector<visualization_msgs::Marker>& markers, const std_msgs::ColorRGBA& color) const
+  {    
+    Eigen::Vector2d dir = current_pose.orientationUnitVec();
+    if (front_radius_>0)
+    {
+      markers.push_back(visualization_msgs::Marker());
+      visualization_msgs::Marker& marker1 = markers.front();
+      marker1.type = visualization_msgs::Marker::CYLINDER;
+      current_pose.toPoseMsg(marker1.pose);
+      marker1.pose.position.x += front_offset_*dir.x();
+      marker1.pose.position.y += front_offset_*dir.y();
+      marker1.scale.x = marker1.scale.y = 2*front_radius_; // scale = diameter
+//       marker1.scale.z = 0.05;
+      marker1.color = color;
+    }
+    if (middle_radius_>0)
+    {
+      markers.push_back(visualization_msgs::Marker());
+      visualization_msgs::Marker& marker2 = markers.at(1);
+      marker2.type = visualization_msgs::Marker::CYLINDER;
+      current_pose.toPoseMsg(marker2.pose);
+      marker2.pose.position.x += middle_offset_*dir.x();
+      marker2.pose.position.y += middle_offset_*dir.y();
+      marker2.scale.x = marker2.scale.y = 2*middle_radius_; // scale = diameter
+//       marker1.scale.z = 0.05;
+      marker2.color = color;
 
-//     }
-//     if (middle_radius_>0)
-//     {
-//       markers.push_back(visualization_msgs::Marker());
-//       visualization_msgs::Marker& marker2 = markers.at(1);
-//       marker2.type = visualization_msgs::Marker::CYLINDER;
-//       current_pose.toPoseMsg(marker2.pose);
-//       marker2.pose.position.x += middle_offset_*dir.x();
-//       marker2.pose.position.y += middle_offset_*dir.y();
-//       marker2.scale.x = marker2.scale.y = 2*middle_radius_; // scale = diameter
-// //       marker1.scale.z = 0.05;
-//       marker2.color = color;
-
-//     }
-//     if (rear_radius_>0)
-//     {
-//       markers.push_back(visualization_msgs::Marker());
-//       visualization_msgs::Marker& marker3 = markers.back();
-//       marker3.type = visualization_msgs::Marker::CYLINDER;
-//       current_pose.toPoseMsg(marker3.pose);
-//       marker3.pose.position.x -= rear_offset_*dir.x();
-//       marker3.pose.position.y -= rear_offset_*dir.y();
-//       marker3.scale.x = marker3.scale.y = 2*rear_radius_; // scale = diameter
-// //       marker2.scale.z = 0.05;
-//       marker3.color = color;
-//     }
+    }
+    if (rear_radius_>0)
+    {
+      markers.push_back(visualization_msgs::Marker());
+      visualization_msgs::Marker& marker3 = markers.back();
+      marker3.type = visualization_msgs::Marker::CYLINDER;
+      current_pose.toPoseMsg(marker3.pose);
+      marker3.pose.position.x -= rear_offset_*dir.x();
+      marker3.pose.position.y -= rear_offset_*dir.y();
+      marker3.scale.x = marker3.scale.y = 2*rear_radius_; // scale = diameter
+//       marker2.scale.z = 0.05;
+      marker3.color = color;
+    }
+  }
   
   
   /**
